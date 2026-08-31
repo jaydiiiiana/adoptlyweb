@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 import { supabase } from "@/lib/supabase";
+import { CityInput } from "@/components/city-input";
+import { PH_LOCATIONS_SORTED } from "@/data/ph-locations";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,6 +16,7 @@ export default function SignupPage() {
     email: "",
     password: "",
     street: "",
+    barangay: "",
     city: "",
     postalCode: "",
     phone: "",
@@ -26,6 +29,12 @@ export default function SignupPage() {
     setLoading(true);
     setErrorMsg("");
 
+    if (!PH_LOCATIONS_SORTED.includes(form.city)) {
+      setErrorMsg("Please select a valid city or municipality from the list.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email: form.email,
@@ -34,6 +43,7 @@ export default function SignupPage() {
           data: {
             full_name: form.fullName,
             street_address: form.street,
+            barangay: form.barangay || null,
             city: form.city,
             postal_code: form.postalCode || null,
             phone: form.phone || null,
@@ -190,21 +200,34 @@ export default function SignupPage() {
               />
             </div>
 
+            {/* Barangay */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium" style={{ color: "#3A2E2B" }}>
+                Barangay <span style={{ color: "#E8705A" }}>*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Barangay San Antonio"
+                required
+                disabled={loading}
+                value={form.barangay}
+                onChange={(e) => update("barangay")(e.target.value)}
+                className="w-full rounded-xl px-4 py-3 text-sm border outline-none"
+                style={{ borderColor: "#D6C7B2", backgroundColor: "white", color: "#3A2E2B" }}
+              />
+            </div>
+
             {/* City + Postal — stacked on tiny screens, side-by-side on sm+ */}
             <div className="flex flex-col xs:flex-row gap-3">
               <div className="flex flex-col gap-1.5 flex-1">
                 <label className="text-sm font-medium" style={{ color: "#3A2E2B" }}>
-                  City <span style={{ color: "#E8705A" }}>*</span>
+                  City / Municipality <span style={{ color: "#E8705A" }}>*</span>
                 </label>
-                <input
-                  type="text"
-                  placeholder="Manila"
-                  required
-                  disabled={loading}
+                <CityInput
                   value={form.city}
-                  onChange={(e) => update("city")(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm border outline-none"
-                  style={{ borderColor: "#D6C7B2", backgroundColor: "white", color: "#3A2E2B" }}
+                  onChange={(val) => update("city")(val)}
+                  disabled={loading}
+                  required
                 />
               </div>
               <div className="flex flex-col gap-1.5 xs:w-28">

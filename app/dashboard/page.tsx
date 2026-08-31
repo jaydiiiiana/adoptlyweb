@@ -279,6 +279,20 @@ export default function ExploreFeed() {
 
   useEffect(() => { fetchPets(); }, [fetchPets]);
 
+  // ── Realtime — listen for pet inserts/updates/deletes ───────────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel("pets-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pets" },
+        () => { fetchPets(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchPets]);
+
   useEffect(() => {
     api.get("/profiles/me")
       .then(u => { setMyId(u.id); setMyCity(u.city ?? ""); })

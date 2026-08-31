@@ -10,6 +10,7 @@ import {
   MapPin, Phone, Mail, Edit2, Check, X,
   Camera, PawPrint, ChevronRight,
 } from "lucide-react";
+import { CityInput } from "@/components/city-input";
 
 const STATUS_PILL: Record<string, { bg: string; text: string }> = {
   available: { bg: "#A3B18A22", text: "#3A6020" },
@@ -32,7 +33,7 @@ export default function ProfilePanel() {
   const avatarRef = useRef<HTMLInputElement>(null);
 
   const [editForm, setEditForm] = useState({
-    fullName: "", streetAddress: "", city: "", postalCode: "", phone: "",
+    fullName: "", streetAddress: "", barangay: "", city: "", postalCode: "", phone: "",
   });
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function ProfilePanel() {
         setEditForm({
           fullName:      user.full_name      || "",
           streetAddress: user.street_address || "",
+          barangay:      user.barangay       || "",
           city:          user.city           || "",
           postalCode:    user.postal_code    || "",
           phone:         user.phone          || "",
@@ -102,6 +104,7 @@ export default function ProfilePanel() {
       const updated = await api.patch("/profiles/me", {
         full_name:      editForm.fullName,
         street_address: editForm.streetAddress,
+        barangay:       editForm.barangay || null,
         city:           editForm.city,
         postal_code:    editForm.postalCode,
         phone:          editForm.phone,
@@ -223,11 +226,11 @@ export default function ProfilePanel() {
                 {profile.city}{profile.postal_code ? `, ${profile.postal_code}` : ""}
               </div>
             )}
-            {profile.street_address && (
+            {(profile.street_address || profile.barangay) && (
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border"
                 style={{ borderColor: "#EDE5D8", backgroundColor: "#FDFAF6", color: "#6B5651" }}>
                 <MapPin size={11} style={{ color: "#9B8B84" }} />
-                {profile.street_address}
+                {[profile.street_address, profile.barangay].filter(Boolean).join(", ")}
               </div>
             )}
             {profile.phone && (
@@ -292,13 +295,23 @@ export default function ProfilePanel() {
               style={{ borderColor: "#D6C7B2" }} />
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold" style={{ color: "#3A2E2B" }}>Barangay</label>
+            <input type="text" value={editForm.barangay}
+              onChange={e => setEditForm(p => ({ ...p, barangay: e.target.value }))}
+              placeholder="e.g. Barangay San Antonio"
+              className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
+              style={{ borderColor: "#D6C7B2" }} />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold" style={{ color: "#3A2E2B" }}>City</label>
-              <input type="text" required value={editForm.city}
-                onChange={e => setEditForm(p => ({ ...p, city: e.target.value }))}
-                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
-                style={{ borderColor: "#D6C7B2" }} />
+              <label className="text-xs font-bold" style={{ color: "#3A2E2B" }}>City / Municipality</label>
+              <CityInput
+                value={editForm.city}
+                onChange={val => setEditForm(p => ({ ...p, city: val }))}
+                required
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold" style={{ color: "#3A2E2B" }}>Postal Code</label>

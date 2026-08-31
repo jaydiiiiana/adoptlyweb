@@ -103,6 +103,18 @@ export default function MyPetsPage() {
     finally { setLoading(false); }
   };
 
+  // ── Realtime — refresh my pets on any change ─────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel("my-pets-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "pets" }, () => {
+        loadPets(userId);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
